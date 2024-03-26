@@ -1,6 +1,5 @@
 import com.android.build.gradle.internal.cxx.configure.gradleLocalProperties
 import java.io.ByteArrayOutputStream
-import java.nio.file.Paths
 
 val localProperties = gradleLocalProperties(rootDir)
 
@@ -8,27 +7,27 @@ plugins {
     id("com.android.application")
     kotlin("android")
     id("kotlin-android")
-    id("dev.rikka.tools.refine") version "3.1.1"
+    id("dev.rikka.tools.refine") version "4.3.0"
 }
 
 android {
     val buildTime = System.currentTimeMillis()
-    val baseVersionName = "0.2"
+    val baseVersionName = "0.7"
 
-    compileSdk = 33
+    compileSdk = 34
 
     defaultConfig {
         applicationId = "io.github.duzhaokun123.yamf"
         minSdk = 31
-        targetSdk = 33
-        versionCode = 2
+        targetSdk = 34
+        versionCode = 7
         versionName = "$baseVersionName-git.$gitHash${if (isDirty) "-dirty" else ""}"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
         buildConfigField("long", "BUILD_TIME", buildTime.toString())
     }
-    packagingOptions {
+    packaging {
         resources.excludes.addAll(
             arrayOf(
                 "META-INF/**",
@@ -50,8 +49,8 @@ android {
     }
     buildTypes {
         getByName("release") {
-            isMinifyEnabled = false
-            isShrinkResources = false
+            isMinifyEnabled = true
+            isShrinkResources = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
@@ -71,6 +70,11 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+            signingConfig = if (System.getenv("REL_KEY") != null) {
+                signingConfigs.getByName("release")
+            } else {
+                signingConfigs.getByName("debug")
+            }
 //            sourceSets.getByName("main").java.srcDir(File("build/generated/ksp/debug/kotlin"))
         }
     }
@@ -80,9 +84,7 @@ android {
     }
     kotlinOptions {
         jvmTarget = "11"
-        freeCompilerArgs = listOf(
-            "-Xuse-k2"
-        )
+        languageVersion = "2.0"
     }
     buildFeatures {
         viewBinding = true
@@ -95,66 +97,45 @@ android {
 }
 
 dependencies {
-    implementation("androidx.core:core-ktx:1.9.0")
-    implementation("androidx.activity:activity-ktx:1.6.1")
-    implementation("androidx.fragment:fragment-ktx:1.5.5")
-    implementation("androidx.appcompat:appcompat:1.6.0")
-    implementation("com.google.android.material:material:1.8.0")
+    implementation("androidx.core:core-ktx:1.12.0")
+    implementation("androidx.activity:activity-ktx:1.8.2")
+    implementation("androidx.fragment:fragment-ktx:1.6.2")
+    implementation("androidx.appcompat:appcompat:1.6.1")
+    implementation("com.google.android.material:material:1.11.0")
     implementation("androidx.constraintlayout:constraintlayout:2.1.4")
+    implementation("androidx.wear:wear:1.3.0")
+    implementation("androidx.preference:preference-ktx:1.2.1")
 
     //kotlinx-coroutines
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-jdk8:1.6.4")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.6.4")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-jdk8:1.7.3")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
 
     compileOnly(project(":android-stub"))
-    compileOnly("dev.rikka.hidden:stub:3.4.3")
+    compileOnly("dev.rikka.hidden:stub:4.2.0")
+    implementation("dev.rikka.hidden:compat:4.2.0")
 
     //never upgrade until new extension function
+    //noinspection GradleDependency
     implementation("com.github.kyuubiran:EzXHelper:1.0.3")
     compileOnly("de.robv.android.xposed:api:82")
 
-    implementation("com.google.code.gson:gson:2.10.1")
-
     //lifecycle
-    val lifecycleVersion = "2.5.1"
+    val lifecycleVersion = "2.6.2"
     implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:$lifecycleVersion")
     implementation("androidx.lifecycle:lifecycle-livedata-ktx:$lifecycleVersion")
     implementation("androidx.lifecycle:lifecycle-common-java8:$lifecycleVersion")
 
     //ViewBindingUtil
     implementation("com.github.matsudamper:ViewBindingUtil:0.1")
-//
-//    // rikka hidden api
-//    val rikkaHidden = "3.4.0"
-//    implementation("dev.rikka.hidden:compat:$rikkaHidden")
-//    compileOnly("dev.rikka.hidden:stub:$rikkaHidden")
-}
 
-val optimizeReleaseRes = task("optimizeReleaseRes").doLast {
-    val aapt2 = Paths.get(
-        project.android.sdkDirectory.path,
-        "build-tools", project.android.buildToolsVersion, "aapt2"
-    )
-    val zip = Paths.get(
-        project.buildDir.path, "intermediates",
-        "optimized_processed_res", "release", "resources-release-optimize.ap_"
-    )
-    val optimized = File("${zip}.opt")
-    val cmd = exec {
-        commandLine(aapt2, "optimize", "--collapse-resource-names", "-o", optimized, zip)
-        isIgnoreExitValue = true
-    }
-    if (cmd.exitValue == 0) {
-        delete(zip)
-        optimized.renameTo(zip.toFile())
-    }
-}
-tasks.whenTaskAdded {
-    when (name) {
-        "optimizeReleaseResources" -> {
-            finalizedBy(optimizeReleaseRes)
-        }
-    }
+    //FlexboxLayout
+    implementation("com.google.android.flexbox:flexbox:3.0.0")
+
+    //dynamicanimation
+    implementation("androidx.dynamicanimation:dynamicanimation-ktx:1.0.0-alpha03")
+
+    //gson
+    implementation("com.google.code.gson:gson:2.10.1")
 }
 
 val gitHash: String

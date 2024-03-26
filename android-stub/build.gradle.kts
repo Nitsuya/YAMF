@@ -1,14 +1,13 @@
 plugins {
     id("com.android.library")
-    id("dev.rikka.tools.refine") version "3.1.1"
 }
 
 android {
-    compileSdk = 33
+    compileSdk = 34
 
     defaultConfig {
         minSdk = 31
-        targetSdk = 33
+        targetSdk = 34
 
         consumerProguardFiles("consumer-rules.pro")
     }
@@ -31,6 +30,8 @@ android {
 }
 
 dependencies {
-    compileOnly("androidx.annotation:annotation:1.5.0")
-    compileOnly("dev.rikka.hidden:stub:3.4.3")
+    annotationProcessor("dev.rikka.tools.refine:annotation-processor:4.3.0")
+    compileOnly("dev.rikka.tools.refine:annotation:4.3.0")
+    compileOnly("androidx.annotation:annotation:1.7.1")
+    compileOnly("dev.rikka.hidden:stub:4.2.0")
 }
